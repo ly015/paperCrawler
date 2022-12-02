@@ -7,25 +7,10 @@ import inspect
 # The database to obtain the citation count
 from semanticscholar import SemanticScholar
 
-from nltk.stem.porter import PorterStemmer
-
-from ..items import Paper
-
-
-import scrapy
-import re
-
-# To remove consecutive space and special formatting characters like \n
-import inspect
-
-from semanticscholar import SemanticScholar
-
-# from nltk.stem.porter import PorterStemmer
-
-# We import the Paper item we defined in `items.py`.
 from ..items import Paper
 
 import json
+
 
 class BaseSpider(scrapy.Spider):
 
@@ -57,10 +42,11 @@ class BaseSpider(scrapy.Spider):
             self.download_delay = 10
 
     def parse_paper(self, response):
-    	# Deliver the scraped item to `pipelines.py`.
+        # Deliver the scraped item to `pipelines.py`.
         paper = Paper()
 
-        conf, title, pdf_url, clean_title, authors, abstract = self.extract_data(response)
+        conf, title, pdf_url, clean_title, authors, abstract = self.extract_data(
+            response)
 
         paper["conf"] = conf
         paper["title"] = title
@@ -73,8 +59,8 @@ class BaseSpider(scrapy.Spider):
 
 
 class CvprScrapySpider(BaseSpider):
-	# The name differentiate this crawler class against others. Try to
-	# use unique name for each crawler class.
+    # The name differentiate this crawler class against others. Try to
+    # use unique name for each crawler class.
 
     name = 'cvpr'
 
@@ -106,7 +92,8 @@ class CvprScrapySpider(BaseSpider):
         # Now we navigate to the Day page.
         # Get all the days listed there using the xpath.
         # extract() generates a list of all matched elements.
-        day_url_list = response.xpath("//div[@id='content']/dl/dd/a/@href").extract()
+        day_url_list = response.xpath(
+            "//div[@id='content']/dl/dd/a/@href").extract()
 
         # Traverse every day
         for day_url in day_url_list:
@@ -122,7 +109,8 @@ class CvprScrapySpider(BaseSpider):
 
     def parse_paper_list(self, response):
         # Now we have all the papers.
-        paper_url_list = response.xpath("//div[@id='content']/dl/dt[@class='ptitle']/a/@href").extract()
+        paper_url_list = response.xpath(
+            "//div[@id='content']/dl/dt[@class='ptitle']/a/@href").extract()
 
         # We loop all the paper url, visit them, and call the `parse_paper` method to process.
         for paper_url in paper_url_list:
@@ -141,11 +129,15 @@ class CvprScrapySpider(BaseSpider):
         if conf == "html":
             conf = "".join(response.url.split("/")[3].split("_")[1:]).upper()
 
-        title = inspect.cleandoc(response.xpath("//div[@id='papertitle']/text()").get())
-        pdf_url = response.urljoin(response.xpath("//div[@id='content']/dl/dd/a[1]/@href").get())
+        title = inspect.cleandoc(
+            response.xpath("//div[@id='papertitle']/text()").get())
+        pdf_url = response.urljoin(
+            response.xpath("//div[@id='content']/dl/dd/a[1]/@href").get())
         clean_title = re.sub(r'\W+', ' ', title).lower()
-        authors = inspect.cleandoc(response.xpath("//div[@id='authors']/b/i/text()").get())
-        abstract = inspect.cleandoc(response.xpath("//div[@id='abstract']/text()").get())
+        authors = inspect.cleandoc(
+            response.xpath("//div[@id='authors']/b/i/text()").get())
+        abstract = inspect.cleandoc(
+            response.xpath("//div[@id='abstract']/text()").get())
 
         return conf, title, pdf_url, clean_title, authors, abstract
 
@@ -166,9 +158,12 @@ class EccvScrapySpider(CvprScrapySpider):
     def parse(self, response):
 
         for conf in self.wanted_conf:
-            conf_text = " ".join(["\n\t\t" + conf[:4].upper(), conf[4:], "Papers\n\t"])
+            conf_text = " ".join(
+                ["\n\t\t" + conf[:4].upper(), conf[4:], "Papers\n\t"])
             paper_url_list = response.xpath(
-                "//div[@class='py-6 container']/button[text()='" + conf_text + "']/following-sibling::div[position()=1]/div[@id='content']/dl/dt/a/@href").extract()
+                "//div[@class='py-6 container']/button[text()='" + conf_text +
+                "']/following-sibling::div[position()=1]/div[@id='content']/dl/dt/a/@href"
+            ).extract()
 
             for paper_url in paper_url_list:
                 url = response.urljoin(paper_url)
@@ -190,7 +185,9 @@ class NipsScrapySpider(BaseSpider):
             yield scrapy.Request(url, callback=self.parse_paper_list)
 
     def parse_paper_list(self, response):
-        paper_url_list = response.xpath("//div[@class='container-fluid']/div[@class='col']/ul/li/a/@href").extract()
+        paper_url_list = response.xpath(
+            "//div[@class='container-fluid']/div[@class='col']/ul/li/a/@href"
+        ).extract()
 
         for paper_url in paper_url_list:
             url = response.urljoin(paper_url)
@@ -199,19 +196,29 @@ class NipsScrapySpider(BaseSpider):
     @staticmethod
     def extract_data(response):
 
-        conf = "NIPS" + response.xpath("//div[@class='col']/p/a/@href").get().split("/")[2]
+        conf = "NIPS" + response.xpath(
+            "//div[@class='col']/p/a/@href").get().split("/")[2]
 
-        title = inspect.cleandoc(response.xpath("//div[@class='col']/h4/text()").get())
+        title = inspect.cleandoc(
+            response.xpath("//div[@class='col']/h4/text()").get())
         clean_title = re.sub(r'\W+', ' ', title).lower()
-        authors = inspect.cleandoc(response.xpath("//div[@class='col']/p[position()=2]/i/text()").get())
+        authors = inspect.cleandoc(
+            response.xpath(
+                "//div[@class='col']/p[position()=2]/i/text()").get())
 
         try:
-            abstract = inspect.cleandoc(response.xpath("//div[@class='col']/p[position()=4]/text()").get())
+            abstract = inspect.cleandoc(
+                response.xpath(
+                    "//div[@class='col']/p[position()=4]/text()").get())
         except:
-            abstract = inspect.cleandoc(response.xpath(
-                "//div[@class='col']/p[position()=3]/text() | //div[@class='col']/p[position()=3]/span/text()").get())
+            abstract = inspect.cleandoc(
+                response.xpath(
+                    "//div[@class='col']/p[position()=3]/text() | //div[@class='col']/p[position()=3]/span/text()"
+                ).get())
 
-        pdf_url = response.urljoin(response.xpath("//div[@class='col']/div/a[text()='Paper']/@href").get())
+        pdf_url = response.urljoin(
+            response.xpath(
+                "//div[@class='col']/div/a[text()='Paper']/@href").get())
 
         return conf, title, pdf_url, clean_title, authors, abstract
 
@@ -229,7 +236,8 @@ class AaaiScrapySpider(BaseSpider):
             yield scrapy.Request(url, callback=self.parse_track_list)
 
     def parse_track_list(self, response):
-        track_url_list = response.xpath("//div[@class='content']/ul/li/a/@href").extract()
+        track_url_list = response.xpath(
+            "//div[@class='content']/ul/li/a/@href").extract()
 
         for track_url in track_url_list:
             url = response.urljoin(track_url)
@@ -237,7 +245,8 @@ class AaaiScrapySpider(BaseSpider):
 
     def parse_paper_list(self, response):
         paper_url_list = response.xpath(
-            "//div[@id='content']/div[@id='right']/div[@id='box6']/div[@class='content']/p/a[1]/@href").extract()
+            "//div[@id='content']/div[@id='right']/div[@id='box6']/div[@class='content']/p/a[1]/@href"
+        ).extract()
 
         for paper_url in paper_url_list:
             url = response.urljoin(paper_url)
@@ -246,20 +255,24 @@ class AaaiScrapySpider(BaseSpider):
     @staticmethod
     def extract_data(response):
 
-        conf = "AAAI" + response.xpath("//section[@class='sub_item']/div[@class='value']/span/text()").get().split("-")[
-            0]
+        conf = "AAAI" + response.xpath(
+            "//section[@class='sub_item']/div[@class='value']/span/text()"
+        ).get().split("-")[0]
 
         title = inspect.cleandoc(response.xpath("//article/h1/text()").get())
         clean_title = re.sub(r'\W+', ' ', title).lower()
-        authors = inspect.cleandoc(
-            ",".join(response.xpath("//ul[@class='authors']/li/span[@class='name']/text()").extract()).replace("\t",
-                                                                                                               "").replace(
-                "\n", ""))
-        abstract = inspect.cleandoc("".join(response.xpath(
-            "//section[@class='item abstract']/p/text() | //section[@class='item abstract']/text()").extract()).replace(
-            "\t", "").replace("\n", ""))
+        authors = inspect.cleandoc(",".join(
+            response.xpath(
+                "//ul[@class='authors']/li/span[@class='name']/text()").
+            extract()).replace("\t", "").replace("\n", ""))
+        abstract = inspect.cleandoc("".join(
+            response.xpath(
+                "//section[@class='item abstract']/p/text() | //section[@class='item abstract']/text()"
+            ).extract()).replace("\t", "").replace("\n", ""))
 
-        pdf_url = response.xpath("//div[@class='entry_details']/div[@class='item galleys']/ul/li/a/@href").get()
+        pdf_url = response.xpath(
+            "//div[@class='entry_details']/div[@class='item galleys']/ul/li/a/@href"
+        ).get()
 
         return conf, title, pdf_url, clean_title, authors, abstract
 
@@ -276,7 +289,9 @@ class IjcaiScrapySpider(BaseSpider):
             yield scrapy.Request(url, callback=self.parse_paper_list)
 
     def parse_paper_list(self, response):
-        paper_url_list = response.xpath("//div[@class='paper_wrapper']/div[@class='details']/a[2]/@href").extract()
+        paper_url_list = response.xpath(
+            "//div[@class='paper_wrapper']/div[@class='details']/a[2]/@href"
+        ).extract()
 
         for paper_url in paper_url_list:
             url = response.urljoin(paper_url)
@@ -285,12 +300,16 @@ class IjcaiScrapySpider(BaseSpider):
     @staticmethod
     def extract_data(response):
 
-        conf = response.xpath("//div[@class='row'][2]/div/div[2]/a/@href").get().split("/")[4].replace(".", "").upper()
+        conf = response.xpath("//div[@class='row'][2]/div/div[2]/a/@href").get(
+        ).split("/")[4].replace(".", "").upper()
 
-        title = inspect.cleandoc(response.xpath("//div[@class='row'][1]/div/h1/text()").get())
+        title = inspect.cleandoc(
+            response.xpath("//div[@class='row'][1]/div/h1/text()").get())
         clean_title = re.sub(r'\W+', ' ', title).lower()
-        authors = inspect.cleandoc(response.xpath("//div[@class='row'][1]/div/h2/text()").get())
-        abstract = inspect.cleandoc(response.xpath("//div[@class='row'][3]/div/text()").get())
+        authors = inspect.cleandoc(
+            response.xpath("//div[@class='row'][1]/div/h2/text()").get())
+        abstract = inspect.cleandoc(
+            response.xpath("//div[@class='row'][3]/div/text()").get())
         pdf_url = response.xpath("//div[@class='btn-container']/a/@href").get()
 
         return conf, title, pdf_url, clean_title, authors, abstract
@@ -304,35 +323,47 @@ class IclrScrapySpider(BaseSpider):
 
     def parse(self, response):
         for conf in self.wanted_conf:
-            url = response.urljoin("Conferences/" + conf[4:] + "/Schedule?type=Poster")
+            url = response.urljoin("Conferences/" + conf[4:] +
+                                   "/Schedule?type=Poster")
             yield scrapy.Request(url, callback=self.parse_paper_list)
 
     def parse_paper_list(self, response):
         paper_id_list = response.xpath(
-            "//div[@id='base-main-content']/div[2]/div[3 < position()]/div[@class='maincard narrower poster']/@id").extract()
+            "//div[@id='base-main-content']/div[2]/div[3 < position()]/div[@class='maincard narrower poster']/@id"
+        ).extract()
 
         for paper_id in paper_id_list:
-            url = response.url.split("type=Poster")[0] + "showEvent=" + paper_id.split("_")[1]
+            url = response.url.split(
+                "type=Poster")[0] + "showEvent=" + paper_id.split("_")[1]
 
             yield scrapy.Request(url, callback=self.parse_paper)
 
     @staticmethod
     def extract_data(response):
 
-        conf = "".join(response.xpath(
-            "//div[@id='sidebar']/div/span/b/text() | //div[@id='sidebar']/div/span/b/span/text()").extract()).replace(
-            " | ", "")
+        conf = "".join(
+            response.xpath(
+                "//div[@id='sidebar']/div/span/b/text() | //div[@id='sidebar']/div/span/b/span/text()"
+            ).extract()).replace(" | ", "")
         title = inspect.cleandoc(
-            response.xpath("//div[@id='base-main-content']/div[2]/div[@id=$pid]/div[@class='maincardBody']/text()",
-                           pid="maincard_" + response.url.split("=")[1]).get())
+            response.xpath(
+                "//div[@id='base-main-content']/div[2]/div[@id=$pid]/div[@class='maincardBody']/text()",
+                pid="maincard_" + response.url.split("=")[1]).get())
         clean_title = re.sub(r'\W+', ' ', title).lower()
-        authors = inspect.cleandoc(
-            ",".join(response.xpath("//div[@id='base-main-content']/div[2]/button/text()").extract())).replace("»", "")
-        abstract = inspect.cleandoc(response.xpath(
-            "//div[@class='abstractContainer']/p/text() | //div[@class='abstractContainer']/text() | //div[@class='abstractContainer']/span/text()").get())
+        authors = inspect.cleandoc(",".join(
+            response.xpath(
+                "//div[@id='base-main-content']/div[2]/button/text()").extract(
+                ))).replace("»", "")
+        abstract = inspect.cleandoc(
+            response.xpath(
+                "//div[@class='abstractContainer']/p/text() | //div[@class='abstractContainer']/text() | //div[@class='abstractContainer']/span/text()"
+            ).get())
 
-        paper_id = response.xpath("//div[@class='maincard narrower poster']/@id").get()
-        pdf_id = response.xpath("//div[@id=$pid]/div/span/a/@href", pid=paper_id).get().split("forum")[1]
+        paper_id = response.xpath(
+            "//div[@class='maincard narrower poster']/@id").get()
+        pdf_id = response.xpath(
+            "//div[@id=$pid]/div/span/a/@href",
+            pid=paper_id).get().split("forum")[1]
         pdf_url = "https://openreview.net/pdf" + pdf_id
         return conf, title, pdf_url, clean_title, authors, abstract
 
@@ -350,7 +381,8 @@ class IcmlScrapySpider(BaseSpider):
 
     def parse_paper_list(self, response):
         paper_id_list = response.xpath(
-            "//div[@id='base-main-content']/div[2]/div[3 < position()]/div[@class='maincard narrower poster']/@id").extract()
+            "//div[@id='base-main-content']/div[2]/div[3 < position()]/div[@class='maincard narrower poster']/@id"
+        ).extract()
 
         for paper_id in paper_id_list:
             url = response.url + "?showEvent=" + paper_id.split("_")[1]
@@ -360,21 +392,30 @@ class IcmlScrapySpider(BaseSpider):
     @staticmethod
     def extract_data(response):
 
-        conf = "".join(response.xpath(
-            "//div[@id='sidebar']/div/span/b/text() | //div[@id='sidebar']/div/span/b/span/text()").extract()).replace(
-            " | ", "")
+        conf = "".join(
+            response.xpath(
+                "//div[@id='sidebar']/div/span/b/text() | //div[@id='sidebar']/div/span/b/span/text()"
+            ).extract()).replace(" | ", "")
         title = inspect.cleandoc(
-            response.xpath("//div[@id='base-main-content']/div[2]/div[@id=$pid]/div[@class='maincardBody']/text()",
-                           pid="maincard_" + response.url.split("=")[1]).get())
+            response.xpath(
+                "//div[@id='base-main-content']/div[2]/div[@id=$pid]/div[@class='maincardBody']/text()",
+                pid="maincard_" + response.url.split("=")[1]).get())
         clean_title = re.sub(r'\W+', ' ', title).lower()
-        authors = inspect.cleandoc(
-            ",".join(response.xpath("//div[@id='base-main-content']/div[2]/button/text()").extract())).replace("»", "")
-        abstract = inspect.cleandoc(response.xpath(
-            "//div[@class='abstractContainer']/p/text() | //div[@class='abstractContainer']/text() | //div[@class='abstractContainer']/span/text()").get())
+        authors = inspect.cleandoc(",".join(
+            response.xpath(
+                "//div[@id='base-main-content']/div[2]/button/text()").extract(
+                ))).replace("»", "")
+        abstract = inspect.cleandoc(
+            response.xpath(
+                "//div[@class='abstractContainer']/p/text() | //div[@class='abstractContainer']/text() | //div[@class='abstractContainer']/span/text()"
+            ).get())
 
         # ICML currently does not provide pdf link in this source. So the code below won't get anything.
-        paper_id = response.xpath("//div[@class='maincard narrower poster']/@id").get()
-        pdf_id = response.xpath("//div[@id=$pid]/div/span/a/@href", pid=paper_id).get().split("forum")[1]
+        paper_id = response.xpath(
+            "//div[@class='maincard narrower poster']/@id").get()
+        pdf_id = response.xpath(
+            "//div[@id=$pid]/div/span/a/@href",
+            pid=paper_id).get().split("forum")[1]
         pdf_url = "https://openreview.net/pdf" + pdf_id
         return conf, title, pdf_url, clean_title, authors, abstract
 
@@ -401,7 +442,9 @@ class MmScrapySpider(BaseSpider):
             yield scrapy.Request(url, callback=self.parse_session_list)
 
     def parse_session_list(self, response):
-        session_list = response.xpath("//div[@class='accordion sections']/div[@class='accordion-tabbed rlist']/div/a/@href").extract()
+        session_list = response.xpath(
+            "//div[@class='accordion sections']/div[@class='accordion-tabbed rlist']/div/a/@href"
+        ).extract()
 
         for session in session_list:
             doi = re.search(pattern=r'10(.+?)\?', string=session)[0][:-1]
@@ -422,7 +465,9 @@ class MmScrapySpider(BaseSpider):
             yield scrapy.Request(url, callback=self.parse_paper_list)
 
     def parse_paper_list(self, response):
-        doi_list = response.xpath("//div[@class='issue-item clearfix']/div/div/h5/a/@href").extract()
+        doi_list = response.xpath(
+            "//div[@class='issue-item clearfix']/div/div/h5/a/@href").extract(
+            )
 
         for doi in doi_list:
             url = self.base_url + doi
@@ -431,14 +476,23 @@ class MmScrapySpider(BaseSpider):
     @staticmethod
     def extract_data(response):
 
-        title = response.xpath("//div[@class='article-citations']/div[@class='citation']/div[@class='border-bottom clearfix']/h1/text()").get()
+        title = response.xpath(
+            "//div[@class='article-citations']/div[@class='citation']/div[@class='border-bottom clearfix']/h1/text()"
+        ).get()
         clean_title = re.sub(r'\W+', ' ', title).lower()
 
-        authors = inspect.cleandoc(",".join(response.xpath(
-            "//div[@class='article-citations']/div[@class='citation']/div[@class='border-bottom clearfix']/div[@id='sb-1']/ul/li[@class='loa__item']/a/@title").extract()))
+        authors = inspect.cleandoc(",".join(
+            response.xpath(
+                "//div[@class='article-citations']/div[@class='citation']/div[@class='border-bottom clearfix']/div[@id='sb-1']/ul/li[@class='loa__item']/a/@title"
+            ).extract()))
 
-        abstract = inspect.cleandoc(response.xpath("//div[@class='abstractSection abstractInFull']/p/text()").get())
-        conf = response.xpath("//div[@class='article-citations']/div[@class='citation']/div[@class='border-bottom clearfix']/div[@class='issue-item__detail']/a/@title").get().split(":")[0]
+        abstract = inspect.cleandoc(
+            response.xpath(
+                "//div[@class='abstractSection abstractInFull']/p/text()").get(
+                ))
+        conf = response.xpath(
+            "//div[@class='article-citations']/div[@class='citation']/div[@class='border-bottom clearfix']/div[@class='issue-item__detail']/a/@title"
+        ).get().split(":")[0]
         pdf_url = ""
 
         return conf, title, pdf_url, clean_title, authors, abstract

@@ -14,6 +14,6 @@ class Paper(Item):
     authors = Field()
     abstract = Field()
     code_url = Field()
-    citation_count = Field() # The number of citations.
-    matched_keys = Field() # The matched queries.
+    citation_count = Field()  # The number of citations.
+    matched_keys = Field()  # The matched queries.
     pdf_url = Field()  # The PDF url for the paper.

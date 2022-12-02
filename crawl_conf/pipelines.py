@@ -3,16 +3,12 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
-
-# useful for handling different item types with a single interface
-from itemadapter import ItemAdapter
-from scrapy.exceptions import DropItem
+import re
 
 # For fuzzy match. Sometimes, the title have slight difference between different sources.
 from fuzzywuzzy import fuzz
-
-# For regular expression
-import re
+# useful for handling different item types with a single interface
+from scrapy.exceptions import DropItem
 
 
 class CrawlConfPipeline:
@@ -30,13 +26,17 @@ class CrawlConfPipeline:
         clean_abstract_token = clean_abstract.split(" ")
         citation_count = -1
 
-        matched_keys = [keyword for keyword in spider.wanted_keyword_in_title if keyword in clean_abstract_token]
+        matched_keys = [
+            keyword for keyword in spider.wanted_keyword_in_title
+            if keyword in clean_abstract_token
+        ]
 
         # If the queries are found in the abstract, then return the item, otherwise drop it.
         if len(matched_keys):
 
             # Try to get the code url. The code extract any url from the abstract and take them as the code url.
-            item["code_url"] = re.findall(r'(https?://\S+)', abstract)
+            item["code_url"] = re.findall(r'(https?://github.com\S+)',
+                                          abstract).rstrip('.')
 
             if hasattr(spider, "count_citation_from_3rd_party_api"):
 
@@ -47,8 +47,10 @@ class CrawlConfPipeline:
                 # Get the citation count from SemanticScholar.
                 ratio_list = []
                 for paper_info in paper_info_list:
-                    clean_paper_info_title = re.sub(r'\W+', ' ', paper_info.title).lower()
-                    ratio_list.append(fuzz.ratio(clean_paper_info_title, clean_title))
+                    clean_paper_info_title = re.sub(r'\W+', ' ',
+                                                    paper_info.title).lower()
+                    ratio_list.append(
+                        fuzz.ratio(clean_paper_info_title, clean_title))
                     if clean_paper_info_title == clean_title:
                         citation_count = paper_info.citationCount
                         break
@@ -59,7 +61,6 @@ class CrawlConfPipeline:
                     idx_max = ratio_list.index(max_ratio)
                     paper_info = paper_info_list[idx_max]
                     citation_count = paper_info.citationCount
-
 
             item["citation_count"] = citation_count
             item["matched_keys"] = matched_keys
