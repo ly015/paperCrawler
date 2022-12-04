@@ -4,9 +4,50 @@
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
+from scrapy.http import HtmlResponse
+from scrapy_selenium.middlewares import SeleniumMiddleware
+from scrapy_selenium.http import SeleniumRequest
+from selenium.webdriver.support.ui import WebDriverWait
 
-# useful for handling different item types with a single interface
-from itemadapter import is_item, ItemAdapter
+
+class MySeleniumMiddleware(SeleniumMiddleware):
+
+    def process_request(self, request, spider):
+        """Process a request using the selenium driver if applicable"""
+
+        if not isinstance(request, SeleniumRequest):
+            return None
+
+        self.driver.get(request.url)
+
+        for cookie_name, cookie_value in request.cookies.items():
+            self.driver.add_cookie({
+                'name': cookie_name,
+                'value': cookie_value
+            })
+
+        if request.wait_until:
+            WebDriverWait(self.driver,
+                          request.wait_time).until(request.wait_until)
+
+        if request.script:
+            self.driver.execute_script(request.script)
+            # TODO: remove this hard coded time
+            WebDriverWait(self.driver, 2)
+
+        if request.screenshot:
+            request.meta['screenshot'] = self.driver.get_screenshot_as_png()
+
+        body = str.encode(self.driver.page_source)
+
+        # Expose the driver via the "meta" attribute
+        request.meta.update({'driver': self.driver})
+
+        return HtmlResponse(
+            self.driver.current_url,
+            body=body,
+            encoding='utf-8',
+            request=request)
 
 
 class CrawlConfSpiderMiddleware:

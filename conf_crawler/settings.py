@@ -7,22 +7,22 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'crawl_conf'
+BOT_NAME = 'conf_crawler'
 
-SPIDER_MODULES = ['crawl_conf.spiders']
-NEWSPIDER_MODULE = 'crawl_conf.spiders'
+SPIDER_MODULES = ['conf_crawler.spiders']
+NEWSPIDER_MODULE = 'conf_crawler.spiders'
 
-LOG_LEVEL = "DEBUG"
+LOG_LEVEL = "INFO"
 
 FEED_EXPORT_FIELDS = [
-    'conf', 'matched_keys', 'title', 'clean_title', 'citation_count',
-    'code_url', 'pdf_url', 'authors', 'abstract'
+    'conference', 'year', 'title', 'authors', 'abstract', 'code_url',
+    'pdf_url', 'matched_queries'
 ]
 
-FEEDS = {r"data.csv": {"format": "csv", "overwrite": False}}
+FEEDS = {"data.csv": {"format": "csv", "overwrite": False}}
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-# USER_AGENT = 'crawl_conf (+http://www.yourdomain.com)'
+# USER_AGENT = 'conf_crawler (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
@@ -53,14 +53,13 @@ ROBOTSTXT_OBEY = False
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 # SPIDER_MIDDLEWARES = {
-#    'crawl_conf.middlewares.CrawlConfSpiderMiddleware': 543,
+#     'conf_crawler.middlewares.CrawlConfSpiderMiddleware': 543,
 # }
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-# DOWNLOADER_MIDDLEWARES = {
-#    'crawl_conf.middlewares.CrawlConfDownloaderMiddleware': 543,
-# }
+# DOWNLOADER_MIDDLEWARES = {'scrapy_selenium.SeleniumMiddleware': 800}
+# DOWNLOADER_MIDDLEWARES = {'conf_crawler.middlewares.MySeleniumMiddleware': 800}
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
@@ -70,9 +69,7 @@ ROBOTSTXT_OBEY = False
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-ITEM_PIPELINES = {
-    'crawl_conf.pipelines.CrawlConfPipeline': 300,
-}
+ITEM_PIPELINES = {'conf_crawler.pipelines.PaperItemPipeline': 300}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
@@ -94,3 +91,12 @@ ITEM_PIPELINES = {
 # HTTPCACHE_DIR = 'httpcache'
 # HTTPCACHE_IGNORE_HTTP_CODES = []
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+# Set settings whose default value is deprecated to a future-proof value
+REQUEST_FINGERPRINTER_IMPLEMENTATION = '2.7'
+TWISTED_REACTOR = 'twisted.internet.asyncioreactor.AsyncioSelectorReactor'
+
+SELENIUM_DRIVER_NAME = 'chrome'
+SELENIUM_DRIVER_EXECUTABLE_PATH = '/usr/local/bin/chromedriver'
+SELENIUM_DRIVER_ARGUMENTS = []
+# SELENIUM_DRIVER_ARGUMENTS = ['--headless']
