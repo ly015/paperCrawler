@@ -14,10 +14,7 @@ import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Hello PhD life!')
     parser.add_argument(
-        '--confs',
-        default='aaai',
-        type=str,
-        help='What years you want to crawl?')
+        'confs', type=str, help='What years you want to crawl?')
     parser.add_argument(
         '--years',
         default="2022",
