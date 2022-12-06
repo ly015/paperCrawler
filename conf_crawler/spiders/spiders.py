@@ -549,7 +549,7 @@ class PMLRSpider(BaseSpider):
                 '//article/div[@id="abstract"]/text()').get()).replace(
                     '\n', ' ')
         pdf_url = response.xpath(
-            '//article/div[@id="extras"]/ul/li/a[text()="Download PDF"]/@href'
+            '//div[@id="extras"]/ul/li/a[text()="Download PDF"]/@href'
         ).get()
         return Paper(
             conference=self.name.upper(),
