@@ -401,7 +401,7 @@ class ICLRSpider(BaseSpider):
             content = paper_info['content']
             title = content['title']
             authors = ', '.join(content['authors'])
-            abstract = content['abstract'].replace('\n', ' ')
+            abstract = content['abstract'].replace('\n', ' ').replace('\0', '')
             pdf_url = 'https://openreview.net' + content['pdf']
             code_url = None
             if 'code' in content and content['code']:
@@ -549,8 +549,7 @@ class PMLRSpider(BaseSpider):
                 '//article/div[@id="abstract"]/text()').get()).replace(
                     '\n', ' ')
         pdf_url = response.xpath(
-            '//div[@id="extras"]/ul/li/a[text()="Download PDF"]/@href'
-        ).get()
+            '//div[@id="extras"]/ul/li/a[text()="Download PDF"]/@href').get()
         return Paper(
             conference=self.name.upper(),
             year=year,
