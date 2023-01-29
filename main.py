@@ -12,27 +12,32 @@ from scrapy.crawler import CrawlerProcess
 import argparse
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Hello PhD life!')
+    parser = argparse.ArgumentParser(description="Crawl conference paper info")
     parser.add_argument(
-        'confs', type=str, help='What years you want to crawl?')
-    parser.add_argument(
-        '--years',
-        default="2022",
+        "conference",
         type=str,
-        help='What years you want to crawl?')
+        help="Conference names, seperated by comma. Supported names include "
+        "cvpr, iccv, eccv, neurips, aaai, icml, iclr, wacv",
+    )
     parser.add_argument(
-        '--queries', default="", help='What keywords you want to query?')
+        "years",
+        type=str,
+        help="Years of the conference, separated by comma",
+    )
+    parser.add_argument(
+        "--queries", default="", help="What keywords you want to query?"
+    )
 
     args = parser.parse_args()
 
-    confs = args.confs
+    conference = args.conference
     years = args.years
     queries = args.queries
 
     setting = get_project_settings()
     process = CrawlerProcess(setting)
 
-    for conf in confs.split(','):
+    for conf in conference.split(","):
         process.crawl(conf, years=years, queries=queries)
 
     process.start()

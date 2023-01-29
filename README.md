@@ -14,7 +14,7 @@ The crawler scrapes accepted papers from top AI conferences, including:
 - IJCAI since 2017.
 - NIPS since 1987.
 - ICML since 2017.
-- ICLR 2018, 2019, 2021, and 2022.
+- ICLR 2018, 2019, 2021 and 2022.
 
 ### Change Log
 
@@ -59,7 +59,7 @@ scrapy crawl [conference name] -a years=[year1,year2,...,yearn] -a queries=[key1
 ##### Example 1
 
 ```shell
-scrapy crawl iccv -a years=2021,2019,2017 -a keys=video,emotion -o output.csv
+scrapy crawl iccv -a years=2021,2019,2017 -a queries=video,emotion -o output.csv
 ```
 
 The command above can scrape the information of all papers from ICCV2017, ICCV2019, ICCV2021, with "video" OR "emotion"
@@ -69,7 +69,7 @@ checkpoint. It scrapes really fast.
 ##### Example 2
 
 ```shell
-scrapy crawl ijcai  -a years=2021,2020 -a keys=video -a cc=1 -o output.csv -s JOBDIR=folder1
+scrapy crawl ijcai  -a years=2021,2020 -a query=video -a cc=1 -o output.csv -s JOBDIR=folder1
 ```
 
 The command above will save the scraping [checkpoint](https://docs.scrapy.org/en/latest/topics/jobs.html#topics-jobs) in
@@ -79,13 +79,13 @@ command so that the scraping can continue.
 #### For multiple conferences
 
 ```shell
-python main.py -confs [conf1,conf2,...,confn] -years [year1,year2,...,yearn] -keys [key1,key2,...,keyn]
+python main.py [conf1,conf2,...,confn] [year1,year2,...,yearn] -query [key1,key2,...,keyn]
 ```
 
 ##### Example 3
 
 ```shell
-python main -confs cvpr,iccv,eccv -years 2018,2019,2020,2021,2022 -keys emotion,multimodal,multi-modal
+python main cvpr,iccv,eccv 2018,2019,2020,2021,2022 -query emotion,multimodal,multi-modal
 ```
 
-The command would scrape the papers, whose abstracts contain at least one keys, from CVPR, ICCV, and ECCV since 2018. In this case, the scraped data will be saved in `data.csv`, which is defined in `settings.py`.
+The command would scrape the papers, whose abstracts contain at least one query, from CVPR, ICCV, and ECCV since 2018. In this case, the scraped data will be saved in `data.csv`, which is defined in `settings.py`.
