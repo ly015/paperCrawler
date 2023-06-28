@@ -12,13 +12,11 @@ from scrapy.exceptions import DropItem
 def get_code_url(title):
     if not title:
         return ""
-    r = requests.get("https://paperswithcode.com/api/v1/search", params={"q": title})
+    r = requests.get("https://paperswithcode.com/api/v1/search",
+                     params={"q": title})
     res = r.json()
-    if (
-        res["count"] > 0
-        and res["results"][0]["repository"] is not None
-        and res["results"][0]["is_official"]
-    ):
+    if (res["count"] > 0 and res["results"][0]["repository"] is not None
+            and res["results"][0]["is_official"]):
         code_url = res["results"][0]["repository"]["url"]
     else:
         code_url = ""
@@ -26,6 +24,7 @@ def get_code_url(title):
 
 
 class PaperItemPipeline:
+
     def process_item(self, item, spider):
         # Process the item one at a time.
         abstract = item["abstract"]
@@ -36,7 +35,9 @@ class PaperItemPipeline:
         tokens = set(clean_title.split(" ") + clean_abstract.split(" "))
 
         if spider.queries:
-            matched_queries = [query for query in spider.queries if query in tokens]
+            matched_queries = [
+                query for query in spider.queries if query in tokens
+            ]
         else:
             matched_queries = ""
 
@@ -46,11 +47,12 @@ class PaperItemPipeline:
             item["matched_queries"] = matched_queries
             if not item.get("code_url"):
                 # try to get the code url from the abstract
-                url = re.findall(r"(https?://github.com\S+)", abstract)[-1]
-                url = url.rstrip('".})')
+                url = re.findall(r"(https?://github.com\S+)", abstract)
                 # try to get the paper url from paperswithcode
                 if not url:
                     url = get_code_url(title)
+                else:
+                    url = url[-1].rstrip('".})')
                 item["code_url"] = url
             return item
         else:

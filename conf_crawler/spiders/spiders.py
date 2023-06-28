@@ -1,6 +1,7 @@
 import inspect
 import re
 from abc import abstractmethod
+from rich.progress import track
 
 import scrapy
 
@@ -27,13 +28,13 @@ class CVFSpider(BaseSpider):
         for year in self.years:
             url = f'{base_url}{self.name.upper()}{year}'
             if year >= 2018:
-                yield scrapy.Request(
-                    url, callback=self.parse_day, cb_kwargs={'year': year})
+                yield scrapy.Request(url,
+                                     callback=self.parse_day,
+                                     cb_kwargs={'year': year})
             else:
-                yield scrapy.Request(
-                    url,
-                    callback=self.parse_paper_list,
-                    cb_kwargs={'year': year})
+                yield scrapy.Request(url,
+                                     callback=self.parse_paper_list,
+                                     cb_kwargs={'year': year})
 
     def parse_day(self, response, year):
         # Now we navigate to the Day page.
@@ -50,10 +51,9 @@ class CVFSpider(BaseSpider):
                 continue
 
             url = response.urljoin(day_url)
-            yield scrapy.Request(
-                url,
-                callback=self.parse_paper_list,
-                cb_kwargs=response.cb_kwargs)
+            yield scrapy.Request(url,
+                                 callback=self.parse_paper_list,
+                                 cb_kwargs=response.cb_kwargs)
 
     def parse_paper_list(self, response, year):
         # Now we have all the papers.
@@ -64,10 +64,9 @@ class CVFSpider(BaseSpider):
             url = response.urljoin(paper_url)
 
             # for each paper, navigate to its detail page
-            yield scrapy.Request(
-                url,
-                callback=self.parse_paper_details,
-                cb_kwargs=response.cb_kwargs)
+            yield scrapy.Request(url,
+                                 callback=self.parse_paper_details,
+                                 cb_kwargs=response.cb_kwargs)
 
     def parse_paper_details(self, response, year):
         title = inspect.cleandoc(
@@ -79,13 +78,12 @@ class CVFSpider(BaseSpider):
         abstract = inspect.cleandoc(
             response.xpath("//div[@id='abstract']/text()").get())
 
-        return Paper(
-            conference=self.name.upper(),
-            year=year,
-            title=title,
-            authors=authors,
-            abstract=abstract,
-            pdf_url=pdf_url)
+        return Paper(conference=self.name.upper(),
+                     year=year,
+                     title=title,
+                     authors=authors,
+                     abstract=abstract,
+                     pdf_url=pdf_url)
 
 
 class CVPRSpider(CVFSpider):
@@ -103,8 +101,9 @@ class WACVSpider(CVFSpider):
         base_url = 'https://openaccess.thecvf.com/'
         for year in self.years:
             url = f'{base_url}{self.name.upper()}{year}'
-            yield scrapy.Request(
-                url, callback=self.parse_paper_list, cb_kwargs={'year': year})
+            yield scrapy.Request(url,
+                                 callback=self.parse_paper_list,
+                                 cb_kwargs={'year': year})
 
 
 class ECCVSpider(BaseSpider):
@@ -130,10 +129,9 @@ class ECCVSpider(BaseSpider):
 
             for paper_url in paper_url_list:
                 url = response.urljoin(paper_url)
-                yield scrapy.Request(
-                    url,
-                    callback=self.parse_paper_details,
-                    cb_kwargs={'year': year})
+                yield scrapy.Request(url,
+                                     callback=self.parse_paper_details,
+                                     cb_kwargs={'year': year})
 
     def parse_paper_details(self, response, year):
         title = inspect.cleandoc(
@@ -146,13 +144,12 @@ class ECCVSpider(BaseSpider):
             response.xpath("//div[@id='abstract']/text()").get()).replace(
                 '\n', ' ').rstrip()
 
-        return Paper(
-            conference=self.name.upper(),
-            year=year,
-            title=title,
-            authors=authors,
-            abstract=abstract,
-            pdf_url=pdf_url)
+        return Paper(conference=self.name.upper(),
+                     year=year,
+                     title=title,
+                     authors=authors,
+                     abstract=abstract,
+                     pdf_url=pdf_url)
 
 
 class NeurIPSSpider(BaseSpider):
@@ -161,8 +158,9 @@ class NeurIPSSpider(BaseSpider):
     def start_requests(self):
         for year in self.years:
             url = f'https://papers.neurips.cc/paper/{year}'
-            yield scrapy.Request(
-                url, callback=self.parse_paper_list, cb_kwargs={'year': year})
+            yield scrapy.Request(url,
+                                 callback=self.parse_paper_list,
+                                 cb_kwargs={'year': year})
 
     def parse_paper_list(self, response, year):
         paper_url_list = response.xpath(
@@ -171,10 +169,9 @@ class NeurIPSSpider(BaseSpider):
 
         for paper_url in paper_url_list:
             url = response.urljoin(paper_url)
-            yield scrapy.Request(
-                url,
-                callback=self.parse_paper_details,
-                cb_kwargs=response.cb_kwargs)
+            yield scrapy.Request(url,
+                                 callback=self.parse_paper_details,
+                                 cb_kwargs=response.cb_kwargs)
 
     def parse_paper_details(self, response, year):
         title = inspect.cleandoc(
@@ -194,13 +191,12 @@ class NeurIPSSpider(BaseSpider):
             response.xpath(
                 "//div[@class='col']/div/a[text()='Paper']/@href").get())
 
-        return Paper(
-            conference='NeurIPS',
-            year=year,
-            title=title,
-            authors=authors,
-            abstract=abstract,
-            pdf_url=pdf_url)
+        return Paper(conference='NeurIPS',
+                     year=year,
+                     title=title,
+                     authors=authors,
+                     abstract=abstract,
+                     pdf_url=pdf_url)
 
 
 class AAAISpider(BaseSpider):
@@ -211,39 +207,38 @@ class AAAISpider(BaseSpider):
         for year in self.years:
             url = f'https://aaai.org/Library/AAAI/aaai{str(year)[2:]}contents.php'
             if year >= 2020:
-                yield scrapy.Request(
-                    url,
-                    callback=self.parse_track_list,
-                    cb_kwargs={'year': year})
+                yield scrapy.Request(url,
+                                     callback=self.parse_track_list,
+                                     cb_kwargs={'year': year})
             else:
-                yield scrapy.Request(
-                    url,
-                    callback=self.parse_paper_list_before2020,
-                    cb_kwargs={'year': year})
+                yield scrapy.Request(url,
+                                     callback=self.parse_paper_list_before2020,
+                                     cb_kwargs={'year': year})
 
     def parse_track_list(self, response, year):
-        elements = response.xpath("//div[@class='content']/ul/li/a")
+        # elements = response.xpath("//div[@class='content']/ul/li/a")
+        elements = response.xpath("//main[@class='content']/ul/li/a")
         for elem in elements:
             subtitle = elem.xpath('text()').get()
             # exclude special programs and student tracks
             if 'Technical Track' in subtitle:
                 url = response.urljoin(elem.xpath('@href').get())
-                yield scrapy.Request(
-                    url,
-                    callback=self.parse_paper_list,
-                    cb_kwargs=response.cb_kwargs)
+                yield scrapy.Request(url,
+                                     callback=self.parse_paper_list,
+                                     cb_kwargs=response.cb_kwargs)
 
     def parse_paper_list(self, response, year):
         paper_url_list = response.xpath(
             "//div[@id='content']/div[@id='right']/div[@id='box6']/div[@class='content']/p/a[1]/@href"
         ).extract()
+        import pdb
+        pdb.set_trace()
 
         for paper_url in paper_url_list:
             url = response.urljoin(paper_url)
-            yield scrapy.Request(
-                url,
-                callback=self.parse_paper_details,
-                cb_kwargs=response.cb_kwargs)
+            yield scrapy.Request(url,
+                                 callback=self.parse_paper_details,
+                                 cb_kwargs=response.cb_kwargs)
 
     def parse_paper_list_before2020(self, response, year):
         lines = response.xpath(
@@ -270,10 +265,9 @@ class AAAISpider(BaseSpider):
                 break
 
         for url in paper_urls:
-            yield scrapy.Request(
-                url,
-                callback=self.parse_paper_details,
-                cb_kwargs=response.cb_kwargs)
+            yield scrapy.Request(url,
+                                 callback=self.parse_paper_details,
+                                 cb_kwargs=response.cb_kwargs)
 
     def parse_paper_details(self, response, year):
         title = inspect.cleandoc(response.xpath("//article/h1/text()").get())
@@ -290,13 +284,12 @@ class AAAISpider(BaseSpider):
             "//div[@class='entry_details']/div[@class='item galleys']/ul/li/a/@href"
         ).get()
 
-        return Paper(
-            conference=self.name.upper(),
-            year=year,
-            title=title,
-            authors=authors,
-            abstract=abstract,
-            pdf_url=pdf_url)
+        return Paper(conference=self.name.upper(),
+                     year=year,
+                     title=title,
+                     authors=authors,
+                     abstract=abstract,
+                     pdf_url=pdf_url)
 
 
 class IJCAI(BaseSpider):
@@ -309,8 +302,9 @@ class IJCAI(BaseSpider):
                 self.logger.warn('IJCAI {year} is not supported')
                 continue
             url = f'https://www.ijcai.org/proceedings/{year}'
-            yield scrapy.Request(
-                url, callback=self.parse_paper_list, cb_kwargs={'year': year})
+            yield scrapy.Request(url,
+                                 callback=self.parse_paper_list,
+                                 cb_kwargs={'year': year})
 
     def parse_paper_list(self, response, year):
         paper_url_list = response.xpath(
@@ -319,10 +313,9 @@ class IJCAI(BaseSpider):
 
         for paper_url in paper_url_list:
             url = response.urljoin(paper_url)
-            yield scrapy.Request(
-                url,
-                callback=self.parse_paper_details,
-                cb_kwargs=response.cb_kwargs)
+            yield scrapy.Request(url,
+                                 callback=self.parse_paper_details,
+                                 cb_kwargs=response.cb_kwargs)
 
     def parse_paper_details(self, response, year):
         title = inspect.cleandoc(
@@ -334,13 +327,39 @@ class IJCAI(BaseSpider):
                 '\n', ' ')
         pdf_url = response.xpath("//div[@class='btn-container']/a/@href").get()
 
-        return Paper(
-            conference=self.name.upper(),
-            year=year,
-            title=title,
-            authors=authors,
-            abstract=abstract,
-            pdf_url=pdf_url)
+        return Paper(conference=self.name.upper(),
+                     year=year,
+                     title=title,
+                     authors=authors,
+                     abstract=abstract,
+                     pdf_url=pdf_url)
+
+
+class ICMLSpider(BaseSpider):
+    name = 'icml'
+
+    def start_requests(self):
+        for year in self.years:
+            if year == 2023:
+                # url_poster = 'https://api.openreview.net/notes?content.venue=ICML+2023&details=original,directReplies&offset=0&limit=1000&invitation=ICML.cc/2023/Conference/-/Blind_Submission'
+                url_poster = 'https://api.openreview.net/offset=0&limit=1000&invitation=ICML.cc/2023/Conference/-/Blind_Submission'
+                for url in [url_poster, url_top_5, url_top_25]:
+                    yield scrapy.Request(url,
+                                         callback=self.parse_paper_details,
+                                         cb_kwargs={
+                                             'year': year,
+                                             'limit': 1000,
+                                             'offset': 0
+                                         })
+            else:
+                url = f'https://api.openreview.net/notes?invitation=ICLR.cc/{year}/Conference/-/Blind_Submission&details=directReplies&limit=1000&offset=0'
+                yield scrapy.Request(url,
+                                     callback=self.parse_paper_details,
+                                     cb_kwargs={
+                                         'year': year,
+                                         'limit': 1000,
+                                         'offset': 0
+                                     })
 
 
 class ICLRSpider(BaseSpider):
@@ -349,27 +368,37 @@ class ICLRSpider(BaseSpider):
 
     def start_requests(self):
         for year in self.years:
-            if year >= 2022:
+            if year == 2022:
                 for paper_type in ['Oral', 'Spotlight', 'Poster']:
-                    url = f'https://api.openreview.net/notes?content.venue=ICLR+2022+{paper_type}&details=original,directReplies&offset=0&limit=1000&invitation=ICLR.cc/{year}/Conference/-/Blind_Submission'
-                    yield scrapy.Request(
-                        url,
-                        callback=self.parse_paper_details,
-                        cb_kwargs={
-                            'year': year,
-                            'limit': 1000,
-                            'offset': 0
-                        })
+                    url = f'https://api.openreview.net/notes?content.venue=ICLR+{year}+{paper_type}&details=original,directReplies&offset=0&limit=1000&invitation=ICLR.cc/{year}/Conference/-/Blind_Submission'
+                    yield scrapy.Request(url,
+                                         callback=self.parse_paper_details,
+                                         cb_kwargs={
+                                             'year': year,
+                                             'limit': 1000,
+                                             'offset': 0
+                                         })
+            elif year == 2023:
+                url_poster = 'https://api.openreview.net/notes?content.venue=ICLR+2023+poster&details=original,directReplies&offset=0&limit=1000&invitation=ICLR.cc/2023/Conference/-/Blind_Submission'
+                url_top_5 = 'https://api.openreview.net/notes?content.venue=ICLR+2023+notable+top+5%&details=original,directReplies&offset=0&limit=1000&invitation=ICLR.cc/2023/Conference/-/Blind_Submission'
+                url_top_25 = 'https://api.openreview.net/notes?content.venue=ICLR+2023+notable+top+25%&details=original,directReplies&offset=0&limit=1000&invitation=ICLR.cc/2023/Conference/-/Blind_Submission'
+                for url in [url_poster, url_top_5, url_top_25]:
+                    yield scrapy.Request(url,
+                                         callback=self.parse_paper_details,
+                                         cb_kwargs={
+                                             'year': year,
+                                             'limit': 1000,
+                                             'offset': 0
+                                         })
             else:
                 url = f'https://api.openreview.net/notes?invitation=ICLR.cc/{year}/Conference/-/Blind_Submission&details=directReplies&limit=1000&offset=0'
-                yield scrapy.Request(
-                    url,
-                    callback=self.parse_paper_details,
-                    cb_kwargs={
-                        'year': year,
-                        'limit': 1000,
-                        'offset': 0
-                    })
+                yield scrapy.Request(url,
+                                     callback=self.parse_paper_details,
+                                     cb_kwargs={
+                                         'year': year,
+                                         'limit': 1000,
+                                         'offset': 0
+                                     })
 
     def parse_paper_details(self, response, year, limit, offset):
         result = response.json()
@@ -379,16 +408,16 @@ class ICLRSpider(BaseSpider):
                 url = f'https://api.openreview.net/notes?content.venue=ICLR+{year}+Submitted&details=replyCount&offset={offset}&limit={limit}&invitation=ICLR.cc/{year}/Conference/-/Blind_Submission'
             else:
                 url = f'https://api.openreview.net/notes?invitation=ICLR.cc/{year}/Conference/-/Blind_Submission&details=directReplies&limit={limit}&offset={offset}'
-            yield scrapy.Request(
-                url,
-                callback=self.parse_paper_details,
-                cb_kwargs={
-                    'year': year,
-                    'limit': limit,
-                    'offset': offset
-                })
+            yield scrapy.Request(url,
+                                 callback=self.parse_paper_details,
+                                 cb_kwargs={
+                                     'year': year,
+                                     'limit': limit,
+                                     'offset': offset
+                                 })
 
-        for paper_info in result['notes']:
+        for i, paper_info in enumerate(result['notes']):
+            print(f'{i}/{result["count"]}')
             accepted = True
             if year < 2022:
                 for reply in paper_info['details']['directReplies'][::-1]:
@@ -409,14 +438,13 @@ class ICLRSpider(BaseSpider):
                                     content['code'])
                 if matched:
                     code_url = matched.group(0)[1:-1]
-            yield Paper(
-                conference=self.name.upper(),
-                year=year,
-                title=title,
-                authors=authors,
-                abstract=abstract,
-                pdf_url=pdf_url,
-                code_url=code_url)
+            yield Paper(conference=self.name.upper(),
+                        year=year,
+                        title=title,
+                        authors=authors,
+                        abstract=abstract,
+                        pdf_url=pdf_url,
+                        code_url=code_url)
 
 
 # class ICLRSpider(BaseSpider):
@@ -433,7 +461,11 @@ class ICLRSpider(BaseSpider):
 #             raise ImportError('ICLR spider requires selenium to be installed')
 
 #         for year in self.years:
-#             if year == 2022:
+#             if year == 2023:
+#                 presentation_types = [
+#                     'poster', 'notable-top-5-', 'notable-top-25-'
+#                 ]
+#             elif year == 2022:
 #                 presentation_types = [
 #                     'oral-submissions', 'spotlight-submissions',
 #                     'poster-submissions'
@@ -478,10 +510,9 @@ class ICLRSpider(BaseSpider):
 #             f'//div[@id="{pre_type}"]/ul[@class="list-unstyled submissions-list"]/li/h4/a[1]/@href'
 #         ).extract()
 #         for url_part in urls:
-#             yield scrapy.Request(
-#                 url='https://openreview.net/' + url_part,
-#                 callback=self.parse_paper_details,
-#                 cb_kwargs={'year': year})
+#             yield scrapy.Request(url='https://openreview.net/' + url_part,
+#                                  callback=self.parse_paper_details,
+#                                  cb_kwargs={'year': year})
 
 #     def parse_paper_details(self, response, year):
 
@@ -503,14 +534,13 @@ class ICLRSpider(BaseSpider):
 #             matched = re.search(r'\(https://github.com/(.*?)\)', code_region)
 #             if matched:
 #                 code_url = matched.group(0)[1:-1]
-#         return Paper(
-#             conference=self.name.upper(),
-#             year=year,
-#             title=title,
-#             authors=authors,
-#             abstract=abstract,
-#             pdf_url=pdf_url,
-#             code_url=code_url)
+#         return Paper(conference=self.name.upper(),
+#                      year=year,
+#                      title=title,
+#                      authors=authors,
+#                      abstract=abstract,
+#                      pdf_url=pdf_url,
+#                      code_url=code_url)
 
 
 class PMLRSpider(BaseSpider):
@@ -526,18 +556,18 @@ class PMLRSpider(BaseSpider):
                 self.logger.warn(
                     f'{self.name.upper()} {year} is not supported')
             url = response.urljoin(vol)
-            yield scrapy.Request(
-                url, callback=self.parse_paper_list, cb_kwargs={'year': year})
+            yield scrapy.Request(url,
+                                 callback=self.parse_paper_list,
+                                 cb_kwargs={'year': year})
 
     def parse_paper_list(self, response, year):
         abs_urls = response.xpath(
             '//div[@class="paper"]/p[@class="links"]/a[text()="abs"]/@href'
         ).extract()
         for url in abs_urls:
-            yield scrapy.Request(
-                url,
-                callback=self.parse_paper_details,
-                cb_kwargs=response.cb_kwargs)
+            yield scrapy.Request(url,
+                                 callback=self.parse_paper_details,
+                                 cb_kwargs=response.cb_kwargs)
 
     def parse_paper_details(self, response, year):
         title = response.xpath('//article/h1/text()').get()
@@ -550,19 +580,17 @@ class PMLRSpider(BaseSpider):
                     '\n', ' ')
         pdf_url = response.xpath(
             '//div[@id="extras"]/ul/li/a[text()="Download PDF"]/@href').get()
-        return Paper(
-            conference=self.name.upper(),
-            year=year,
-            title=title,
-            authors=authors,
-            abstract=abstract,
-            pdf_url=pdf_url)
+        return Paper(conference=self.name.upper(),
+                     year=year,
+                     title=title,
+                     authors=authors,
+                     abstract=abstract,
+                     pdf_url=pdf_url)
 
 
-class ICMLSpider(PMLRSpider):
+# class ICMLSpider(PMLRSpider):
 
-    name = 'icml'
-
+#     name = 'icml'
 
 # class MmScrapySpider(BaseSpider):
 #     name = 'mm'
